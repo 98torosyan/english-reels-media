@@ -19,7 +19,7 @@ jobs:
         env:
           PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
         run: |
-          if [ -z "$PUBLISH_TOKEN" ]; then echo "PUBLISH_TOKEN secret is missing"; exit 0; fi
+          if [ -z "$PUBLISH_TOKEN" ]; then echo "PUBLISH_TOKEN secret is missing: stopping the chain"; exit 1; fi
           end=$(( $(date +%s) + 330*60 ))
           while [ "$(date +%s)" -lt "$end" ]; do
             m=$(TZ=Asia/Yerevan date +%-M); h=$(TZ=Asia/Yerevan date +%-H)
