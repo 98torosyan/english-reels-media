@@ -1,0 +1,39 @@
+name: Publish ticker
+# Wakes the publisher of 98torosyan/english-reels every 30 minutes during posting hours.
+# One run lasts ~5.5 h and then starts the next one itself, so it does not depend on cron timing.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */4 * * *"   # backup starter in case the chain ever stops
+permissions:
+  actions: write
+concurrency:
+  group: ticker
+  cancel-in-progress: false
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Wake the publisher at :05 and :35 (11:00–23:00 Yerevan)
+        env:
+          PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
+        run: |
+          if [ -z "$PUBLISH_TOKEN" ]; then echo "PUBLISH_TOKEN secret is missing: stopping the chain"; exit 1; fi
+          end=$(( $(date +%s) + 330*60 ))
+          while [ "$(date +%s)" -lt "$end" ]; do
+            m=$(TZ=Asia/Yerevan date +%-M); h=$(TZ=Asia/Yerevan date +%-H)
+            if { [ "$m" -eq 5 ] || [ "$m" -eq 35 ]; } && [ "$h" -ge 11 ] && [ "$h" -le 23 ]; then
+              code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+                -H "Authorization: Bearer $PUBLISH_TOKEN" -H "Accept: application/vnd.github+json" \
+                https://api.github.com/repos/98torosyan/english-reels/actions/workflows/publish.yml/dispatches \
+                -d '{"ref":"main","inputs":{"dry_run":"false"}}')
+              echo "$(TZ=Asia/Yerevan date +%H:%M) woke publisher: HTTP $code"
+              sleep 61
+            fi
+            sleep 20
+          done
+      - name: Start the next run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ticker.yml -R ${{ github.repository }} --ref media
