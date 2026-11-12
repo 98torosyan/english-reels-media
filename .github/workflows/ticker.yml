@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 350
     steps:
-      - name: Wake the publisher at :05 and :35 (11:00–23:00 Yerevan)
+      - name: Wake the publisher at :05 and :35 (10:00–23:00 Yerevan)
         env:
           PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
         run: |
@@ -23,7 +23,7 @@ jobs:
           end=$(( $(date +%s) + 330*60 ))
           while [ "$(date +%s)" -lt "$end" ]; do
             m=$(TZ=Asia/Yerevan date +%-M); h=$(TZ=Asia/Yerevan date +%-H)
-            if { [ "$m" -eq 5 ] || [ "$m" -eq 35 ]; } && [ "$h" -ge 11 ] && [ "$h" -le 23 ]; then
+            if { [ "$m" -eq 5 ] || [ "$m" -eq 35 ]; } && [ "$h" -ge 10 ] && [ "$h" -le 23 ]; then
               code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
                 -H "Authorization: Bearer $PUBLISH_TOKEN" -H "Accept: application/vnd.github+json" \
                 https://api.github.com/repos/98torosyan/english-reels/actions/workflows/publish.yml/dispatches \
